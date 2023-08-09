@@ -1,7 +1,9 @@
 using System.Reflection;
+using Catalog.API;
 using Catalog.API.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,12 +13,16 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddHealthChecks();
+builder.Services.AddCustomDbContext(builder.Configuration);
 
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
 
 
 var app = builder.Build();
+
+app.MapGet("/ping/", () => "Hello World!");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -28,6 +34,15 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
+using var scope = app.Services.CreateScope();
+var context = scope.ServiceProvider.GetRequiredService<CatalogContext>();
+var env = app.Services.GetService<IWebHostEnvironment>();
+var settings = app.Services.GetService<IOptions<CatalogSettings>>();
+var logger = app.Services.GetService<ILogger<CatalogContextSeed>>();
+await context.Database.MigrateAsync();
+
+await new CatalogContextSeed().SeedAsync(context, env, settings, logger);
 
 app.MapControllers();
 

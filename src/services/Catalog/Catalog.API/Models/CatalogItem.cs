@@ -56,12 +56,12 @@ public class CatalogItem
     {
         if (AvailableStock == 0)
         {
-            throw new CatalogDomainException($"Empty stock, product item {Name} is sold out");
+            // throw new CatalogDomainException($"Empty stock, product item {Name} is sold out");
         }
 
         if (quantityDesired <= 0)
         {
-            throw new CatalogDomainException($"Item units desired should be greater than zero");
+            // throw new CatalogDomainException($"Item units desired should be greater than zero");
         }
 
         int removed = Math.Min(quantityDesired, this.AvailableStock);
